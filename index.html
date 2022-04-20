@@ -1,0 +1,207 @@
+<html>
+<head>
+
+<title>Canon website's KPIs</title>
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
+<style>
+.flex-container {
+    display: flex;
+}
+
+.flex-child {
+    flex: 1;
+}  
+
+.flex-child:first-child {
+    margin-right: 20px;
+} 
+
+label {
+  vertical-align: top;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<script>
+
+window.onload = function(){
+  var today = new Date();
+  var yesterday = new Date(today - 24*60*60*1000).toLocaleDateString();
+
+  document.getElementById("daterange").value = yesterday + ' - ' + yesterday;
+}
+
+
+$(function() {
+  $('input[name="daterange"]').daterangepicker({
+    opens: 'left',
+	minDate: "01/01/2022",
+	maxDate: "04/07/2022"
+  }, function(start, end, label) {
+    console.log("A new date selection was made: " + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD'));
+  });
+});
+
+function get_filters(){
+	function check_text(filter_text) {
+	  filter_text != '?params=%7B'
+	}
+	
+	var date_val = document.getElementById('daterange').value;
+	var date_min_str = date_val.split(' - ')[0]
+	var date_min = date_min_str.split('/')[2] + date_min_str.split('/')[0].toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false}) + date_min_str.split('/')[1].toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})
+	var date_max_str = date_val.split(' - ')[1]
+	var date_max = date_max_str.split('/')[2] + date_max_str.split('/')[0].toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false}) + date_max_str.split('/')[1].toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})
+	var dateArr = Array(parseInt(date_max) - parseInt(date_min) + 1).fill().map((_, idx) => parseInt(date_min) + idx)
+	
+	var device_opt = document.querySelectorAll('#device option:checked');
+	var device_sel = Array.from(device_opt).map(el => el.value);
+	
+	console.log(device_sel);
+	
+	var channel_opt = document.querySelectorAll('#channel option:checked');
+	var channel_sel = Array.from(channel_opt).map(el => el.value);
+	
+	console.log(channel_sel);
+	
+	var filter_text = '?params=%7B';
+	
+	  filter_text += '"df17":"include%25EE%2580%25800%25EE%2580%2580IN%25EE%2580%2580';
+	  for (let i = 0; i < dateArr.length; i++) {
+		if (i == 0) {
+		  filter_text += dateArr[i];
+		} else {
+		  filter_text += '%25EE%2580%2580' + dateArr[i];
+		}
+	  }
+	  filter_text += '"';
+	
+	if (device_sel.length > 0) {
+	  filter_text += ',"df3":"include%25EE%2580%25800%25EE%2580%2580IN%25EE%2580%2580';
+	  for (let i = 0; i < device_sel.length; i++) {
+		if (i == 0) {
+		  filter_text += device_sel[i];
+		} else {
+		  filter_text += '%25EE%2580%2580' + device_sel[i];
+		}
+	  }
+	  filter_text += '"';
+	}
+	
+	if (channel_sel.length > 0) {
+	  filter_text += ',"df16":"include%25EE%2580%25800%25EE%2580%2580IN%25EE%2580%2580';
+	  for (let i = 0; i < channel_sel.length; i++) {
+		if (i == 0) {
+		  filter_text += channel_sel[i].replace(' ','%2520');
+		} else {
+		  filter_text += '%25EE%2580%2580' + channel_sel[i].replace(' ','%2520');
+		}
+	  }
+	  filter_text += '"';
+	}
+	
+	filter_text += '%7D';
+	
+	
+	console.log(filter_text);
+	
+	document.getElementById('data-studio-if').src = document.getElementById('data-studio-if').src.split("?")[0] + filter_text
+};
+
+function reset_filters(){
+	var today = new Date();
+	var yesterday = new Date(today - 24*60*60*1000).toLocaleDateString();
+
+	document.getElementById("daterange").value = yesterday + ' - ' + yesterday;
+	
+    var elements = document.getElementById("device").options;
+
+    for(var i = 0; i < elements.length; i++){
+      elements[i].selected = false;
+    }
+	
+    var elements = document.getElementById("channel").options;
+
+    for(var i = 0; i < elements.length; i++){
+      elements[i].selected = false;
+    }
+	
+	document.getElementById('data-studio-if').src = document.getElementById('data-studio-if').src.split("?")[0]
+	
+}
+</script>
+
+<div class="flex-container">
+
+	<div id="data-studio" class="flex-child">
+		<iframe id="data-studio-if" width="1450" height="900" src='https://datastudio.google.com/embed/reporting/e346303b-35d6-4bb2-a37e-1a1e265acbb4/page/bQyqC' frameborder="0" style="border:0"></iframe>
+	</div>
+	
+	<div id="empty" class="flex-child">
+	  
+	</div>
+
+	<div id="box" class="flex-child">
+		<div id="date-div">
+			<label for="date">Date Range:</label>
+
+			<input type="text" name="daterange" id="daterange"/>
+		<div>
+		
+		<br>
+	
+		<div id="device-div">
+			<label for="device">Device:</label>
+
+			<select name="device" id="device" multiple size="3">
+			  <option value="desktop">Desktop</option>
+			  <option value="mobile">Mobile</option>
+			  <option value="tablet">Tablet</option>
+			</select>
+		<div>
+		
+		<br>
+		
+		<div id="channel-div">
+			<label for="channel">Channel:</label>
+
+			<select name="channel" id="channel" multiple size="10">
+			  <option value="Organic Search">Organic Search</option>
+			  <option value="Paid Search">Paid Search</option>
+			  <option value="Direct">Direct</option>
+			  <option value="Social">Social</option>
+			  <option value="Email">Email</option>
+			  <option value="Affiliates">Affiliates</option>
+			  <option value="Referral">Referral</option>
+			  <option value="Apps">Apps</option>
+			  <option value="Display">Display</option>
+			  <option value="(Other)">Other</option>
+			</select>
+		</div>
+		
+		<br>
+		
+		<div class="container">
+		  <div class="row">
+			<button id="submit" onclick="get_filters()">Apply Filters</button>
+			<br>
+			<br>
+			<button id="submit" onclick="reset_filters()">Reset Filters</button>
+		  </div>
+		</div>   
+	</div>
+
+</div>
+
+</body>
+
+</html>
